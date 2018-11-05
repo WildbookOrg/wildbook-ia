@@ -51,7 +51,8 @@ GLOBAL_FEEDBACK_CONFIG_DICT = {
 }
 
 
-@register_route('/', methods=['GET'], __route_authenticate__=False)
+# @register_route('/', methods=['GET'], __route_authenticate__=False)
+@register_route('/home/', methods=['GET'], __route_authenticate__=False)
 def root(**kwargs):
     ibs = current_app.ibs
 
