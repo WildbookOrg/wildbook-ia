@@ -626,13 +626,31 @@ def review_query_chips_best(ibs, aid, **kwargs):
     uuid = list(result_dict['cm_dict'].keys())[0]
     result = result_dict['cm_dict'][uuid]
 
-    scores = result['name_score_list']
-    names = result['unique_name_list']
+    scores = result['score_list']
     best_index = np.argmax(scores)
 
-    best_name = names[best_index]
+    names = result['unique_name_list']
+    dannot_uuid_list = result['dannot_uuid_list']
 
-    return best_name
+    best_name = names[best_index]
+    best_nid = ibs.get_name_rowids_from_text(best_name)
+    best_sex = ibs.get_name_sex_text(best_nid)
+    best_aid_list = ibs.get_name_aids(best_nid)
+    best_age_list = ibs.get_annot_age_months_est_texts(best_aid_list)
+    best_age = best_age_list[0]
+
+    response = {
+        'name': best_name,
+        'sex': best_sex.title(),
+        'age': best_age.title(),
+        'extern': {
+            'reference': result['dannot_extern_reference'],
+            'qannot_uuid': str(result['qannot_uuid']),
+            'dannot_uuid': str(dannot_uuid_list[best_index]),
+        }
+    }
+
+    return response
 
     # review_pair = result_dict['inference_dict']['annot_pair_dict']['review_pair_list'][0]
 

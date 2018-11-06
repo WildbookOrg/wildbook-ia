@@ -44,44 +44,17 @@ function monitorJob(jobid, callback, index, progress) {
 function retrieveIdentification(index, response) {
     var progressBar = $('#progress-bar-' + index + '-3');
 
-    name = response
-
     // $('img#match-' + index).attr('src', response.match).on('load', function() {
     //   progressBar.removeClass('progress-bar-striped')
     //   progressBar.css({"width": "100%"});
     // })
 
-    if (name == 'Zak') {
-      species = 'Chapman’s Zebra'
-      viewpoint = 'Right side'
-      sex = 'Male'
-      age = '19 years old'
-    } else if (name == 'Florence') {
-      species = 'Grant’s Zebra'
-      viewpoint = 'Right side'
-      sex = 'Female'
-      age = '9 years old'
-    } else if (name == 'Pete') {
-      species = 'Grant’s Zebra'
-      viewpoint = 'Right side'
-      sex = 'Male'
-      age = '3 years old'
-    } else {
-      name = 'Unknown'
-      species = registry[index].detection.species2
-      viewpoint = registry[index].detection.viewpoint2 + ' side'
-      sex = 'Unknown'
-      age = 'Unknown'
-    }
+    console.log(response)
 
-    registry[index].detection.name = name
-    registry[index].detection.species = species
-    registry[index].detection.viewpoint = viewpoint
-    registry[index].detection.sex = sex
-    registry[index].detection.age = age
-
-    console.log(registry[index])
-    console.log(registry[index].detection)
+    registry[index].detection.name   = response.name
+    registry[index].detection.sex    = response.sex
+    registry[index].detection.age    = response.age
+    registry[index].detection.extern = response.extern
 
     $('#id-container-labels-' + index).html(
       'Name:<br/>' +
@@ -92,12 +65,41 @@ function retrieveIdentification(index, response) {
     )
 
     $('#id-container-values-' + index).html(
-      '' + name + '<br/>' +
-      '' + species + '<br/>' +
-      '' + viewpoint + '<br/>' +
-      '' + sex + '<br/>' +
-      '' + age
+      '' + registry[index].detection.name + '<br/>' +
+      '' + registry[index].detection.species + '<br/>' +
+      '' + registry[index].detection.viewpoint + '<br/>' +
+      '' + registry[index].detection.sex + '<br/>' +
+      '' + registry[index].detection.age + '<br/>' +
+      '<a class="btn btn-default btn-xs" role="button" data-toggle="collapse" id="button-' + index + '" href="#collapse-' + index + '" aria-expanded="false" aria-controls="collapse-' + index + '">Evidence</a>'
     )
+
+    extern = registry[index].detection.extern
+    match_url = '/api/query/graph/match/thumb/?extern_reference=' + extern.reference + '&query_annot_uuid=' + extern.qannot_uuid + '&database_annot_uuid=' + extern.dannot_uuid
+
+    registry[index].detection.match = {
+      'clean': match_url + '&version=clean',
+      'dirty': match_url + '&version=heatmask',
+    }
+
+    match = registry[index].detection.match
+    $evidence = $('img.evidence#evidence-' + index)
+
+    // Download both clean and dirty images, set to src (clean last)
+    $evidence.attr('src', match.dirty).on('load', function() {
+      $evidence.attr('src', match.clean).on('load', function() {
+        $('a#button-' + index).removeClass("hidden")
+        $evidence.off('load')
+      });
+    });
+
+    $evidence.hover(
+      function() {
+        $(this).attr('src', match.dirty);
+      },
+      function() {
+        $(this).attr('src', match.clean);
+      }
+    );
 
     progressBar.removeClass('progress-bar-striped')
     progressBar.css({"width": "100%"});
@@ -150,8 +152,8 @@ function retrieveClassification(index, response) {
 
     response = response[0]
 
-    registry[index].detection.species2 = response.species
-    registry[index].detection.viewpoint2 = response.viewpoint
+    registry[index].detection.species = response.species_nice
+    registry[index].detection.viewpoint = response.viewpoint_nice
 
     progressBar.removeClass('progress-bar-striped')
     progressBar.css({"width": "100%"});
@@ -410,9 +412,20 @@ function registerFiles(files) {
         var center2 = $('<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 element-center"></div>')
         var right2  = $('<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 element-right"></div>')
 
+        var evidence = $('<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"></div>')
+
+        evidence.append(
+          '<div class="collapse" id="collapse-' + index + '">' +
+          '  <div class="well">' +
+          '    <img class="evidence" id="evidence-' + index + '" src="">' +
+          '  </div>' +
+          '</div>'
+        )
+
         row2.append(left2)
         row2.append(center2)
         row2.append(right2)
+        row2.append(evidence);
 
         var image = $('<img id="image-' + index + '" src="">');
         left2.append(image)
