@@ -454,6 +454,10 @@
   margin-bottom: 0px;
 }
 
+.progress-global .progress-bar {
+    background-color: #eee;
+}
+
 .progress-bar {
     background-color: #3f83c0;
     /*background-color: #eee;  /* #5aced0, #429798; */
@@ -478,7 +482,7 @@
 
 #logo {
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   right: 22px;
   width: 100px;
   height: auto;

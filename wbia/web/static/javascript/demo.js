@@ -1,3 +1,9 @@
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+}
+
 function monitorJob(jobid, callback, index, progress) {
 
     var progressBar = $('#progress-bar-' + index + '-' + progress);
@@ -15,7 +21,7 @@ function monitorJob(jobid, callback, index, progress) {
             if (status != 'completed') {
               setTimeout(function() {
                 monitorJob(jobid, callback, index);
-              }, 500);
+              }, getRandomInt(500, 2001));
             } else {
 
               $.ajax({
@@ -94,9 +100,13 @@ function retrieveIdentification(index, response) {
 
     $evidence.hover(
       function() {
+        index = $(this).attr('index');
+        match = registry[index].detection.match;
         $(this).attr('src', match.dirty);
       },
       function() {
+        index = $(this).attr('index');
+        match = registry[index].detection.match;
         $(this).attr('src', match.clean);
       }
     );
@@ -417,7 +427,7 @@ function registerFiles(files) {
         evidence.append(
           '<div class="collapse" id="collapse-' + index + '">' +
           '  <div class="well">' +
-          '    <img class="evidence" id="evidence-' + index + '" src="">' +
+          '    <img class="evidence" id="evidence-' + index + '" index="' + index + '" src="">' +
           '  </div>' +
           '</div>'
         )
@@ -479,7 +489,7 @@ function positionLogoInit() {
     $('#dropbox-container').removeClass("hidden")
     $('#dropbox-container').css({'height': window.innerHeight})
 
-    offset = (window.innerHeight - $("#dropbox").height()) * 0.5
+    offset = (window.innerHeight - $("#dropbox").height()) * 0.5 - 20
     $('#dropbox-container-inside').css('margin-top', offset + "px")
     $("#dropbox-container-inside").hide().fadeIn(1200)
 
