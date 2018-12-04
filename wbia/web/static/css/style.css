@@ -480,7 +480,7 @@
     background-color: #3f83c0;
 }
 
-#stats-container {
+#stats-container, #download-container {
   position: fixed;
   top: 40px;
   left: 22px;

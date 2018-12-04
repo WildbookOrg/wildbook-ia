@@ -607,6 +607,7 @@ function positionLogoInit() {
     $("#progress").hide()
     $("#logo-container").hide()
     $("#stats-container").hide()
+    $('#download-container').hide()
 
     $('#dropbox-container').removeClass("hidden")
     $('#dropbox-container').css({'height': window.innerHeight})
@@ -618,6 +619,7 @@ function positionLogoInit() {
     animations.dropbox = setTimeout(function() {
       $("#dropbox-text").fadeIn(1200)
       $("#logo-container").fadeIn(1200)
+      $("#download-container").fadeIn(1200)
     }, 1000);
 }
 
@@ -652,6 +654,8 @@ function positionLogoUpload() {
   }, 500)
 
   $('#progress').delay(300).fadeIn(1000)
+
+  $('#download-container').fadeOut(1000)
 }
 
 function resized() {
