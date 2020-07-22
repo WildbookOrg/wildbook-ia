@@ -677,7 +677,7 @@ def review_query_chips_best(ibs, aid, **kwargs):
             'reference': result['dannot_extern_reference'],
             'qannot_uuid': str(result['qannot_uuid']),
             'dannot_uuid': str(dannot_uuid),
-        }
+        },
     }
 
     return response
