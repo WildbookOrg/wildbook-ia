@@ -634,8 +634,8 @@ class InfrReviewers(object):
         if infr.params['manual.autosave']:
             infr.write_wbia_staging_feedback()
 
-    def continue_review(infr):
-        infr.print('continue_review', 10)
+    def resume(infr):
+        infr.print('resume', 10)
         if infr._gen is None:
             return None
 
@@ -704,7 +704,7 @@ class InfrReviewers(object):
             >>> gt.qtapp_loop(qwin=win, freq=10)
         """
         infr.qt_edge_reviewer()
-        # infr.continue_review()
+        # infr.resume()
         return infr.manual_wgt
 
 
