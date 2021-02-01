@@ -945,9 +945,7 @@ def check_name_mapping_consistency(ibs, nx2_aids):
     """ checks that all the aids grouped in a name ahave the same name """
     # DEBUGGING CODE
     try:
-        from wbia import ibsfuncs
-
-        _nids_list = ibsfuncs.unflat_map(ibs.get_annot_name_rowids, nx2_aids)
+        _nids_list = unflat_map(ibs.get_annot_name_rowids, nx2_aids)
         assert all(map(ut.allsame, _nids_list))
     except Exception as ex:
         # THESE SHOULD BE CONSISTENT BUT THEY ARE NOT!!?
@@ -1310,6 +1308,7 @@ def check_cache_purge(ibs, ttl_days=90, dryrun=True, squeeze=True):
         './_ibsdb/_ibeis_cache/match_thumbs',
         './_ibsdb/_ibeis_cache/qres_new',
         './_ibsdb/_ibeis_cache/curvrank',
+        './_ibsdb/_ibeis_cache/curvrank_v2',
         './_ibsdb/_ibeis_cache/pie_neighbors',
     ]
 
@@ -3697,15 +3696,16 @@ def get_database_species_count(ibs, aid_list=None, BATCH_SIZE=25000):
     )
     for batch in range(int(len(aid_list) / BATCH_SIZE) + 1):
         aids = aid_list[batch * BATCH_SIZE : (batch + 1) * BATCH_SIZE]
-        results = ibs.db.connection.execute(stmt, {'aids': aids})
+        with ibs.db.connect() as conn:
+            results = conn.execute(stmt, {'aids': aids})
 
-        for row in results:
-            species_text = row.species_text
-            if species_text is None:
-                species_text = const.UNKNOWN
-            species_count[species_text] = (
-                species_count.get(species_text, 0) + row.num_annots
-            )
+            for row in results:
+                species_text = row.species_text
+                if species_text is None:
+                    species_text = const.UNKNOWN
+                species_count[species_text] = (
+                    species_count.get(species_text, 0) + row.num_annots
+                )
     return species_count
 
 
@@ -4908,11 +4908,12 @@ def filter_aids_to_quality(ibs, aid_list, minqual, unknown_ok=True, speedhack=Tr
         list_repr = ','.join(map(str, aid_list))
         minqual_int = const.QUALITY_TEXT_TO_INT[minqual]
         if unknown_ok:
-            operation = 'SELECT rowid from annotations WHERE (annot_quality ISNULL OR annot_quality==-1 OR annot_quality>={minqual_int}) AND rowid IN ({aids})'
+            operation = 'SELECT rowid from annotations WHERE (annot_quality ISNULL OR annot_quality=-1 OR annot_quality>={minqual_int}) AND rowid IN ({aids})'
         else:
             operation = 'SELECT rowid from annotations WHERE annot_quality NOTNULL AND annot_quality>={minqual_int} AND rowid IN ({aids})'
         operation = operation.format(aids=list_repr, minqual_int=minqual_int)
-        aid_list_ = ut.take_column(ibs.db.connection.execute(operation).fetchall(), 0)
+        with ibs.db.connect() as conn:
+            aid_list_ = ut.take_column(conn.execute(operation).fetchall(), 0)
     else:
         qual_flags = list(
             ibs.get_quality_filterflags(aid_list, minqual, unknown_ok=unknown_ok)
@@ -5006,7 +5007,8 @@ def filter_aids_without_name(ibs, aid_list, invert=False, speedhack=True):
                 'SELECT rowid from annotations WHERE name_rowid>0 AND rowid IN (%s)'
                 % (list_repr,)
             )
-        aid_list_ = ut.take_column(ibs.db.connection.execute(operation).fetchall(), 0)
+        with ibs.db.connect() as conn:
+            aid_list_ = ut.take_column(conn.execute(operation).fetchall(), 0)
     else:
         flag_list = ibs.is_aid_unknown(aid_list)
         if not invert:
@@ -5146,9 +5148,10 @@ def filter_aids_to_species(ibs, aid_list, species, speedhack=True):
     species_rowid = ibs.get_species_rowids_from_text(species)
     if speedhack:
         list_repr = ','.join(map(str, aid_list))
-        operation = 'SELECT rowid from annotations WHERE (species_rowid == {species_rowid}) AND rowid IN ({aids})'
+        operation = 'SELECT rowid from annotations WHERE (species_rowid = {species_rowid}) AND rowid IN ({aids})'
         operation = operation.format(aids=list_repr, species_rowid=species_rowid)
-        aid_list_ = ut.take_column(ibs.db.connection.execute(operation).fetchall(), 0)
+        with ibs.db.connect() as conn:
+            aid_list_ = ut.take_column(conn.execute(operation).fetchall(), 0)
     else:
         species_rowid_list = ibs.get_annot_species_rowids(aid_list)
         is_valid_species = [sid == species_rowid for sid in species_rowid_list]
